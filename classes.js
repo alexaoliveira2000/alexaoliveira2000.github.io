@@ -29,7 +29,7 @@ class Item {
 }
 
 class Agent extends Item {
-    constructor(context, x, y, width, height, color, brain, generation) {
+    constructor(context, x, y, width, height, color, brain, generation, mutationRate, hiddenNodes) {
         super(context, x, y, width, height, color);
         this.velocity = 0;
         this.action = Action.STAND;
@@ -38,9 +38,9 @@ class Agent extends Item {
         this.generation = generation;
         if (brain instanceof NeuralNetwork) {
             this.brain = brain.copy();
-            this.brain.mutate(0.1);
+            this.brain.mutate(mutationRate);
         } else {
-            this.brain = new NeuralNetwork(4, 6, 3);
+            this.brain = new NeuralNetwork(4, hiddenNodes, 3);
         }
     }
 
@@ -103,14 +103,16 @@ class Agent extends Item {
 }
 
 class Population {
-    constructor(size, context) {
+    constructor(size, context, mutationRate, hiddenNodes) {
         this.size = size;
         this.members = [];
+        this.mutationRate = mutationRate;
+        this.hiddenNodes = hiddenNodes;
         for (let i = 1; i <= size; i++)
-            this.members.push(new Agent(context, 100, 300, 50, 100, "red", null, 1));
+            this.members.push(new Agent(context, 100, 300, 50, 100, "red", null, 1, this.mutationRate, this.hiddenNodes));
     }
 
-    performCrossover() {
+    performCrossover(rate) {
         let bestAgent = this.members[0];
         for (const agent of this.members) {
             if (agent.fitness > bestAgent.fitness)
@@ -118,8 +120,8 @@ class Population {
         }
         let newMembers = []
         for (const agent of this.members) {
-            agent.brain.crossover(bestAgent.brain.model, 0.7)
-            let newAgent = new Agent(agent.context, agent.x, agent.y, agent.width, agent.height, agent.color, agent.brain, agent.generation + 1);
+            agent.brain.crossover(bestAgent.brain.model, rate)
+            let newAgent = new Agent(agent.context, agent.x, agent.y, agent.width, agent.height, agent.color, agent.brain, agent.generation + 1, this.mutationRate, this.hiddenNodes);
             newMembers.push(newAgent);
         }
         this.members = newMembers;

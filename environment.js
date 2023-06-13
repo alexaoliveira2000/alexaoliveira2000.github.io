@@ -13,7 +13,7 @@ const obstacleTypes = [
 ]
 
 // html elements
-let canvas, context, score, generationText, agentText, playButton, resetButton, trainButton, trainTable, modelCanvas, modelContext;
+let canvas, context, score, generationText, agentText, playButton, resetButton, trainButton, trainTable, modelCanvas, modelContext, trainGenerations, trainAgents, trainNodes, trainRate, trainCrossover, trainCrossoverYes, trainCrossoverNo, trainCrossoverRate;
 
 // boolean values indicating if game is playing or training
 let playing = false;
@@ -102,9 +102,9 @@ let updateModel = function (context, model, prediction, inputs) {
     let inputWeights = weights[0].arraySync();
     let outputWeights = weights[1].arraySync();
 
-    let layer1Position = 170;
-    let layer2Position = 275 - 25 * outputWeights.length;
-    let layer3Position = 200;
+    let layer1Position = 120;
+    let layer2Position = 225 - 25 * outputWeights.length;
+    let layer3Position = 150;
 
     context.clearRect(0, 0, 800, 700);
 
@@ -139,9 +139,12 @@ let createGenerationTable = function (generation) {
     let generationTitle = document.createElement("h4");
     let generationTable = document.createElement("table");
     let header = document.createElement("tr");
-    let headerAgent = document.createElement("td");
-    let headerScore = document.createElement("td");
-    let headerFitness = document.createElement("td");
+    let headerAgent = document.createElement("th");
+    let headerScore = document.createElement("th");
+    let headerFitness = document.createElement("th");
+    generationDiv.style.marginRight = "32px";
+    generationDiv.style.marginBottom = "10px";
+    generationTable.style.border = "1px solid";
     generationTitle.textContent = "Generation " + generation;
     headerAgent.textContent = "Agent";
     headerScore.textContent = "Score";
@@ -217,6 +220,13 @@ var reset = function () {
     score.textContent = "Score: 0";
     generationText.textContent = "Generation: 0";
     agentText.textContent = "Agent: 0";
+
+    // draw start screen
+    context.fillStyle = "black";
+    context.font = `50px sans-serif`;
+    context.fillText("Genetic Mario", 300, 220);
+    context.font = `20px sans-serif`;
+    context.fillText("Select an option to start", 350, 270);
 }
 
 var play = async function () {
@@ -257,20 +267,48 @@ var play = async function () {
 }
 
 var train = async function () {
+
+    // check inputs
+    trainGenerations = document.getElementById("train_generations");
+    trainAgents = document.getElementById("train_agents");
+    trainNodes = document.getElementById("train_nodes");
+    trainRate = document.getElementById("train_rate");
+    trainCrossoverYes = document.getElementById("train_crossover_yes");
+    trainCrossoverNo = document.getElementById("train_crossover_no");
+    trainCrossoverRate = document.getElementById("train_crossover_rate");
+    if (trainGenerations.value < 1 || trainGenerations.value > 100)
+        return
+    if (trainAgents.value < 1 || trainAgents.value > 50)
+        return
+    if (trainNodes.value < 4 || trainNodes.value > 10)
+        return
+    if (trainRate.value < 0.01 || trainRate.value > 0.99)
+        return
+    if (trainCrossoverRate.value < 0.01 || trainCrossoverRate.value > 0.99)
+        return
+    let doCrossover = trainCrossoverYes.checked;
+    let crossoverRate = trainCrossoverRate.value;
+
+    // disable inputs
+    trainGenerations.disabled = true;
+    trainAgents.disabled = true;
+    trainNodes.disabled = true;
+    trainRate.disabled = true;
+    trainCrossoverYes.disabled = true;
+    trainCrossoverNo.disabled = true;
+    trainCrossoverRate.disabled = true;
+
     // change environment variables
     playing = false;
     training = true;
     playButton.disabled = true;
+    resetButton.disabled = true;
     trainButton.disabled = true;
 
-    let agentsThreshold = 10;
-    let population = new Population(agentsThreshold, context);
-
-    for (let generation = 1; generation <= 100; generation++) {
-        console.log(population.members)
-        trainTable.innerHTML = "";
+    let population = new Population(trainAgents.value, context, trainRate.value, parseInt(trainNodes.value));
+    for (let generation = 1; generation <= trainGenerations.value; generation++) {
         let generationTable = createGenerationTable(generation);
-        for (let agentNumber = 1; agentNumber <= agentsThreshold; agentNumber++) {
+        for (let agentNumber = 1; agentNumber <= trainAgents.value; agentNumber++) {
             let floor = new Item(context, 0, 400, 1000, 100, "green");
             let agent = population.members[agentNumber - 1];
             let obstacles = createObstacles(3);
@@ -294,10 +332,10 @@ var train = async function () {
             agent.calculateFitness();
             addGenerationTable(generationTable, agent, agentNumber);
         }
-        if (population.size == 1)
-            population.nextGeneration();
+        if (doCrossover)
+            population.performCrossover(crossoverRate);
         else
-            population.performCrossover();
+            population.nextGeneration();
     }
 }
 
