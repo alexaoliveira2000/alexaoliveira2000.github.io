@@ -8,12 +8,12 @@ const SPEED = 2;
 const obstacleTypes = [
     { id: 1, y: 300, width: 50, height: 100 },
     { id: 2, y: 350, width: 50, height: 50 },
-    // { id: 3, y: 0, width: 50, height: 280 },
+    //{ id: 3, y: 0, width: 50, height: 280 },
     { id: 4, y: 0, width: 50, height: 330 }
 ]
 
 // html elements
-let canvas, context, score, generationText, agentText, playButton, resetButton, trainButton, trainTable, modelCanvas, modelContext, trainGenerations, trainAgents, trainNodes, trainRate, trainCrossover, trainCrossoverYes, trainCrossoverNo, trainCrossoverRate;
+let canvas, context, score, generationText, agentText, playButton, resetButton, trainButton, trainTable, modelCanvas, modelContext, trainGenerations, trainAgents, trainNodes, trainRate, trainCrossover, trainCrossoverYes, trainCrossoverNo;
 
 // boolean values indicating if game is playing or training
 let playing = false;
@@ -241,7 +241,6 @@ var play = async function () {
     let agent = new Agent(context, 100, 300, 50, 100, "red");
     let obstacles = createObstacles(3);
     floor.show();
-    agent.show();
 
     // player keyboard actions
     document.addEventListener("keydown", function (event) {
@@ -275,19 +274,15 @@ var train = async function () {
     trainRate = document.getElementById("train_rate");
     trainCrossoverYes = document.getElementById("train_crossover_yes");
     trainCrossoverNo = document.getElementById("train_crossover_no");
-    trainCrossoverRate = document.getElementById("train_crossover_rate");
     if (trainGenerations.value < 1 || trainGenerations.value > 100)
         return
     if (trainAgents.value < 1 || trainAgents.value > 50)
         return
     if (trainNodes.value < 4 || trainNodes.value > 10)
         return
-    if (trainRate.value < 0.01 || trainRate.value > 0.99)
-        return
-    if (trainCrossoverRate.value < 0.01 || trainCrossoverRate.value > 0.99)
+    if (trainRate.value < 0.00 || trainRate.value > 0.99)
         return
     let doCrossover = trainCrossoverYes.checked;
-    let crossoverRate = trainCrossoverRate.value;
 
     // disable inputs
     trainGenerations.disabled = true;
@@ -296,7 +291,6 @@ var train = async function () {
     trainRate.disabled = true;
     trainCrossoverYes.disabled = true;
     trainCrossoverNo.disabled = true;
-    trainCrossoverRate.disabled = true;
 
     // change environment variables
     playing = false;
@@ -333,7 +327,7 @@ var train = async function () {
             addGenerationTable(generationTable, agent, agentNumber);
         }
         if (doCrossover)
-            population.performCrossover(crossoverRate);
+            population.performCrossover();
         else
             population.nextGeneration();
     }

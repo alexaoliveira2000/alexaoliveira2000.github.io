@@ -28,7 +28,6 @@ class NeuralNetwork {
     randomGaussian() {
         let mean = 0;
         let stdDev = 1;
-
         let u = 0, v = 0;
         while (u === 0) u = Math.random();
         while (v === 0) v = Math.random();
@@ -45,7 +44,7 @@ class NeuralNetwork {
                 let shape = weights[i].shape;
                 let values = tensor.dataSync().slice();
                 for (let j = 0; j < values.length; j++) {
-                    if (Math.random(1) < rate) {
+                    if (Math.random() < rate) {
                         let w = values[j];
                         values[j] = w + this.randomGaussian();
                     }
@@ -58,7 +57,6 @@ class NeuralNetwork {
     }
 
     crossover(model, crossoverProbability) {
-
         let tensorsModel1 = this.model.getWeights();
         let tensorsModel2 = model.getWeights();
         // for each tensor

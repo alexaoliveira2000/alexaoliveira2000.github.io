@@ -25,7 +25,6 @@ class Item {
         this.context.fillStyle = this.color;
         this.context.fillRect(this.x, this.y, this.width, this.height);
     }
-
 }
 
 class Agent extends Item {
@@ -40,7 +39,7 @@ class Agent extends Item {
             this.brain = brain.copy();
             this.brain.mutate(mutationRate);
         } else {
-            this.brain = new NeuralNetwork(4, hiddenNodes, 3);
+            this.brain = new NeuralNetwork(4, hiddenNodes || 6, 3);
         }
     }
 
@@ -99,7 +98,6 @@ class Agent extends Item {
         this.height = 100;
         this.y = 300;
     }
-
 }
 
 class Population {
@@ -112,7 +110,7 @@ class Population {
             this.members.push(new Agent(context, 100, 300, 50, 100, "red", null, 1, this.mutationRate, this.hiddenNodes));
     }
 
-    performCrossover(rate) {
+    performCrossover() {
         let bestAgent = this.members[0];
         for (const agent of this.members) {
             if (agent.fitness > bestAgent.fitness)
@@ -120,6 +118,7 @@ class Population {
         }
         let newMembers = []
         for (const agent of this.members) {
+            let rate = bestAgent.fitness ? bestAgent.fitness / (bestAgent.fitness + agent.fitness + 0.01) : 0.5;
             agent.brain.crossover(bestAgent.brain.model, rate)
             let newAgent = new Agent(agent.context, agent.x, agent.y, agent.width, agent.height, agent.color, agent.brain, agent.generation + 1, this.mutationRate, this.hiddenNodes);
             newMembers.push(newAgent);
