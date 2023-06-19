@@ -8,9 +8,9 @@ const SPEED = 2;
 const obstacleTypes = [
     { id: 1, y: 300, width: 50, height: 100 },
     { id: 2, y: 350, width: 50, height: 50 },
-    //{ id: 3, y: 0, width: 50, height: 280 },
+    { id: 3, y: 0, width: 50, height: 280 },
     { id: 4, y: 0, width: 50, height: 330 },
-    { id: 5, y: 180, width: 150, height: 150 }
+    //{ id: 5, y: 180, width: 150, height: 150 }
 ]
 
 // html elements
