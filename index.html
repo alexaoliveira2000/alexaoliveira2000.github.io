@@ -1,55 +1,151 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genetic Mario</title>
-    <link rel="icon" type="image/x-icon" href="genetic_mario_icon.png">
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
-    <script src="/neuralNetwork.js"></script>
-    <script src="/classes.js"></script>
-    <script src="/environment.js"></script>
+<meta charset="UTF-8">
+<title>Sudoku Solver</title>
+
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    }
+
+    #sudoku {
+        display: grid;
+        grid-template-columns: repeat(9, 50px);
+        grid-template-rows: repeat(9, 50px);
+        width: max-content;
+        margin: auto;
+        border: 3px solid black; /* outer border */
+    }
+
+    .cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    .cell input {
+        width: 90%;
+        height: 90%;
+        border: none;
+        text-align: center;
+        font-size: 20px;
+        outline: none;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
 </head>
+
 <body>
-    <div style="padding: 10px;">
-        <div style="display: flex; padding-bottom: 10px">
-            <label id="score" style="padding-right: 10px;">Score: 0</label>
-            <label id="generation" style="padding-right: 10px;">Generation: 0</label>
-            <label id="agent" style="padding-right: 10px;">Agent: 0</label>
-        </div>
-        <div style="padding-right: 10px;">
-            <label style="margin-right: 66px">Generations:</label>
-            <input style="width: 70px" type="number" id="train_generations" min=1 max=500 value=50 required>
-        </div>
-        <div style="padding-right: 10px;">
-            <label style="margin-right: 98px">Agents:</label>
-            <input style="width: 70px" type="number" id="train_agents" min=1 max=50 value=10 required>
-        </div>
-        <div style="padding-right: 10px;">
-            <label style="margin-right: 10px">Hidden Layer Nodes:</label>
-            <input style="width: 70px" type="number" id="train_nodes" min=4 max=10 value=6 required>
-        </div>
-        <div style="padding-right: 10px;">
-            <label style="margin-right: 52px">Mutation Rate:</label>
-            <input style="width: 70px" type="number" id="train_rate" min=0.00 max=0.99 value=0.01 step=.01 required>
-        </div>
-        <div style="padding-right: 10px;">
-            <label style="margin-right: 22px">Perform Crossover:</label>
-            <label>Yes</label>
-            <input id="train_crossover_yes" type="radio" name="crossover" checked>
-            <label>No</label>
-            <input id="train_crossover_no" type="radio" name="crossover">
-        </div>
-        <label>Check documentation <a href="https://github.com/alexaoliveira2000/genetic-mario/blob/main/README.md">here</a></label>
-    </div>
-    <div style="display:inline-flexbox; display: flex; flex-direction: row; align-items: center;">
-        <canvas id="canvas" width="1000" height="500" style="border: 3px solid black;"></canvas>
-        <canvas id="model" width="800" height="500"></canvas>
-    </div>
-    <div>
-        <button id="play">Play</button>
-        <button id="reset">Reset</button>
-        <button id="train">Train</button>
-    </div>
-    <div id="train_table" style="width:1050px; display: flex; flex-wrap: wrap;"></div>
+
+<h1>Sudoku Solver</h1>
+
+<div id="sudoku"></div>
+
+<button onclick="solveSudoku()">Solve</button>
+<button onclick="clearGrid()">Clear</button>
+
+<script src="sudoku.js"></script>
+
+<script>
+    // Create empty grid
+    const sudokuDiv = document.getElementById("sudoku");
+
+    for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.maxLength = 1;
+
+            input.addEventListener("input", (e) => {
+                const value = e.target.value;
+                if (!/^[1-9]$/.test(value)) e.target.value = "";
+            });
+
+            cell.appendChild(input);
+
+            // thin borders by default (top + left)
+            cell.style.borderTop = "1px solid #999";
+            cell.style.borderLeft = "1px solid #999";
+
+            // thick vertical lines
+            if (col === 2 || col === 5) {
+                cell.style.borderRight = "3px solid black";
+            } else if (col === 8) {
+                cell.style.borderRight = "1px solid #999"; // last column
+            }
+
+            // thick horizontal lines
+            if (row === 2 || row === 5) {
+                cell.style.borderBottom = "3px solid black";
+            } else if (row === 8) {
+                cell.style.borderBottom = "1px solid #999"; // last row
+            }
+
+            sudokuDiv.appendChild(cell);
+        }
+    }
+
+    function getGridFromUI() {
+        const inputs = document.querySelectorAll("#sudoku input");
+        const grid = [];
+
+        for (let i = 0; i < 9; i++) {
+            const row = [];
+            for (let j = 0; j < 9; j++) {
+                const value = inputs[i * 9 + j].value;
+                row.push(value === "" ? 0 : parseInt(value));
+            }
+            grid.push(row);
+        }
+
+        return grid;
+    }
+
+    function fillGrid(solution) {
+        const inputs = document.querySelectorAll("#sudoku input");
+
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                inputs[i * 9 + j].value = solution[i][j];
+            }
+        }
+    }
+
+    function solveSudoku() {
+        const grid = getGridFromUI();
+
+        if (!isValidInitialGrid(grid)) {
+            alert("Invalid Sudoku: duplicated numbers detected.");
+            return;
+        }
+
+        const solution = solve(grid);
+
+        if (!solution) {
+            alert("No solution exists.");
+            return;
+        }
+
+        fillGrid(solution);
+    }
+
+    function clearGrid() {
+        const inputs = document.querySelectorAll("#sudoku input");
+        inputs.forEach(input => input.value = "");
+    }
+</script>
+
 </body>
 </html>
